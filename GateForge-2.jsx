@@ -48,7 +48,12 @@ const BADGES = [
   {id:"hours_100",icon:"💯",label:"Centurion",desc:"Logged 100+ total study hours",check:s=>s.totalHours>=100},
   {id:"mock_5",icon:"📝",label:"Test Veteran",desc:"Completed 5 mock tests",check:s=>s.mocks.length>=5},
   {id:"pomo_10",icon:"🍅",label:"Focus Master",desc:"Completed 10 Pomodoro sessions",check:s=>s.pomoCount>=10},
-  {id:"no_distract",icon:"🛡️",label:"Steel Mind",desc:"A day with zero distractions",check:s=>s.distLog.some(d=>d.count===0)},
+  {id:"no_distract",icon:"🛡️",label:"Steel Mind",desc:"A day with zero distractions",check:s=>{
+    // Zero distractions = either a day logged in diary with no distraction entry, OR today has 0
+    const today=new Date().toISOString().slice(0,10);
+    const todayEntry=s.distLog.find(d=>d.date===today);
+    return !todayEntry||todayEntry.count===0;
+  }},
 ];
 const NAV=[
   {id:"dashboard",icon:"⬡",label:"Dashboard"},
@@ -110,7 +115,10 @@ function App(){
 
   useEffect(()=>{
     if(!lastStudy)return;
-    const diff=Math.round((new Date(todayStr())-new Date(lastStudy))/86400000);
+    // Use date strings directly to avoid timezone issues
+    const today=new Date();today.setHours(0,0,0,0);
+    const last=new Date(lastStudy);last.setHours(0,0,0,0);
+    const diff=Math.round((today-last)/86400000);
     if(diff>1)setStreak(0);
   },[]);
 
@@ -119,7 +127,9 @@ function App(){
     setTotalHours(p=>p+Number(e.hours));
     const t=todayStr();
     if(lastStudy!==t){
-      const diff=Math.round((new Date(t)-new Date(lastStudy))/86400000);
+      const today=new Date();today.setHours(0,0,0,0);
+      const last=new Date(lastStudy||0);last.setHours(0,0,0,0);
+      const diff=Math.round((today-last)/86400000);
       setStreak(p=>diff===1?p+1:1);
       setLastStudy(t);
     }
@@ -189,9 +199,9 @@ function App(){
         .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
         .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
         .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-        .bnav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:${theme==="dark"?"rgba(11,15,26,.95)":"rgba(248,250,252,.96)"};backdrop-filter:blur(16px);border-top:1px solid ${T.border};padding:6px 0 env(safe-area-inset-bottom,8px)}
-        .bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:5px 2px;border-radius:8px;transition:all .15s;min-width:0}
-        .bnil{font-size:9px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:${T.textMuted};white-space:nowrap}
+        .bnav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:${theme==="dark"?"rgba(11,15,26,.97)":"rgba(248,250,252,.98)"};backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid ${T.border};padding:8px 4px env(safe-area-inset-bottom,10px)}
+        .bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 2px;border-radius:12px;transition:all .2s;min-width:0;max-width:72px}
+        .bnil{font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center}
         .bni.on .bnil{color:${T.primary}}
         .drawer{position:fixed;top:0;left:0;bottom:0;width:260px;z-index:400;background:${theme==="dark"?"rgba(11,15,26,.98)":T.surface};border-right:1px solid ${T.border};padding:20px 12px;overflow-y:auto;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);backdrop-filter:blur(20px)}
         .drawer.open{transform:translateX(0)}
@@ -202,7 +212,7 @@ function App(){
           .sd{display:none!important}
           .tb{display:flex}
           .bnav{display:flex}
-          main{padding:16px 14px 90px!important}
+          main{padding:16px 14px 96px!important}
           .g4{grid-template-columns:1fr 1fr!important}
           .g3{grid-template-columns:1fr 1fr!important}
           .g2{grid-template-columns:1fr!important}
@@ -302,14 +312,39 @@ function App(){
         </main>
       </div>
 
-      {/* BOTTOM NAV */}
+      {/* BOTTOM NAV — 5 main tabs + More */}
       <nav className="bnav">
-        {NAV.map(n=>(
+        {NAV.slice(0,4).map(n=>(
           <div key={n.id} className={`bni${page===n.id?" on":""}`} onClick={()=>goTo(n.id)}>
-            <div style={{fontSize:20,color:page===n.id?T.primary:T.textMuted}}>{n.icon}</div>
-            <div className="bnil">{n.label}</div>
+            <div style={{
+              width:36,height:36,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:18,
+              background:page===n.id?T.primaryDim:"transparent",
+              transition:"all .2s",
+              boxShadow:page===n.id?`0 0 12px ${T.primaryGlow}`:"none",
+            }}>{n.icon}</div>
+            <div className="bnil" style={{color:page===n.id?T.primary:T.textMuted}}>{n.label}</div>
           </div>
         ))}
+        {/* More / Focus button */}
+        <div className={`bni${["focus","motivation","future","rewards","distraction"].includes(page)?" on":""}`} onClick={()=>setDrawerOpen(true)}>
+          <div style={{
+            width:36,height:36,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:18,
+            background:["focus","motivation","future","rewards","distraction"].includes(page)?T.primaryDim:"transparent",
+            transition:"all .2s",
+            boxShadow:["focus","motivation","future","rewards","distraction"].includes(page)?`0 0 12px ${T.primaryGlow}`:"none",
+          }}>
+            {["focus","motivation","future","rewards","distraction"].includes(page)
+              ? NAV.find(n=>n.id===page)?.icon
+              : "☰"}
+          </div>
+          <div className="bnil" style={{color:["focus","motivation","future","rewards","distraction"].includes(page)?T.primary:T.textMuted}}>
+            {["focus","motivation","future","rewards","distraction"].includes(page)
+              ? NAV.find(n=>n.id===page)?.label
+              : "More"}
+          </div>
+        </div>
       </nav>
     </div>
   );
