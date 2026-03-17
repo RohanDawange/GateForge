@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+const { useState, useEffect, useRef } = React;
 
 // ─────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -81,7 +81,7 @@ const useLS=(key,init)=>{
 // ─────────────────────────────────────────────────────────────────
 // ROOT APP
 // ─────────────────────────────────────────────────────────────────
-export default function App(){
+function App(){
   const[theme,setTheme]=useState("dark");
   const[page,setPage]=useState("dashboard");
   const[focusMode,setFocusMode]=useState(false);
@@ -955,5 +955,4 @@ function PDistraction({T,theme,distLog,addDist,todayDist}){
   );
 }
 
-// PWA Mount
 window.App = App;
