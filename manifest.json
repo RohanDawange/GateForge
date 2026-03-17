@@ -2,7 +2,8 @@
   "name": "GateForge — GATE 2027",
   "short_name": "GateForge",
   "description": "Your GATE 2027 Preparation Command Centre",
-  "start_url": "/",
+  "start_url": "/GateForge/",
+  "scope": "/GateForge/",
   "display": "standalone",
   "background_color": "#0B0F1A",
   "theme_color": "#6366F1",
@@ -21,6 +22,5 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["education", "productivity"],
-  "screenshots": []
+  "categories": ["education", "productivity"]
 }
